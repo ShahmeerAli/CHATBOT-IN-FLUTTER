@@ -1,3 +1,4 @@
+import 'package:chatbot/Backend.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -64,7 +65,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       color: isUser ? Colors.blue : Colors.greenAccent,
                       borderRadius: BorderRadius.circular(15)
                     ),
-                    child: Text(message['text']!,style: TextStyle(color: isUser ? Colors.white : Colors.black),),
+                    child: Text(message['text']!,style: TextStyle(color: isUser ? Colors.white : Colors.black,fontSize: 20),),
                   ),
                 );
           })),
@@ -95,11 +96,41 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
                 InkWell(
-                  onTap: (){
+                  onTap: () async {
+                    final userMessage = _textController.text.trim();
+                    if (userMessage.isEmpty) return;
+
+                    setState(() {
+                      messages.add({"role": "user", "text": userMessage});
+                      messages.add({"role": "bot", "text": ""}); // bot placeholder
+                    });
+
+                    _textController.clear();
+
+                    // Call sendMessage and then update the state with the checkpointId
+                    await BackendState.sendMessage(userMessage, (chunk) {
+                      setState(() {
+                        messages.last["text"] = messages.last["text"]! + chunk;
+                      });
+                    });
 
                   },
                   child: Image.asset("assets/images/fastforward.png",width: 40,height: 40,),
+                  
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: InkWell(
+                    onTap: (){
+                      setState(() {
+                        BackendState.checkpointId=null;
+                        messages.clear();
+                      });
+                    },
+                    child: Image.asset("assets/images/new.png"),
+                  ),
                 )
+
               ],
             ),
           )
